@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#fafaf9">
+  <meta name="description" content="Plan daily menus and share what's being served.">
+  <title>Food Calendar</title>
+  <link rel="stylesheet" href="calendar.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Food Calendar home">
+        <span class="brand-icon" aria-hidden="true">✳</span>
+        <span>daily<span class="brand-accent">menu</span></span>
+      </a>
+      <div class="topbar-right">
+        <span class="save-status"><span class="save-dot"></span><span id="saveStatusText">Connecting to shared menu</span></span>
+        <button class="button button-outline" id="editorLoginButton" type="button">Editor sign in</button>
+        <button class="button button-outline" id="editorLogoutButton" type="button" hidden>Sign out</button>
+        <button class="button button-outline" id="bulkUploadButton" type="button"><span aria-hidden="true">↥</span> Bulk upload</button>
+        <button class="button button-dark" id="viewMenuButton" type="button"><span aria-hidden="true">◉</span> View menu</button>
+      </div>
+    </header>
+
+    <main>
+      <div id="notice" class="notice" role="status" aria-live="polite"></div>
+      <section id="calendarApp" aria-labelledby="pageTitle">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">Plan ahead. Eat well.</p>
+            <h1 id="pageTitle">Food Calendar</h1>
+            <p class="page-intro">Plan menus day by day and see what’s being served.</p>
+          </div>
+        </div>
+
+        <div class="overview">
+          <section class="calendar-card" aria-label="Choose a date">
+            <div class="month-nav">
+              <button class="icon-button" id="previousMonth" type="button" aria-label="Previous month">‹</button>
+              <h2 id="monthLabel"></h2>
+              <button class="icon-button" id="nextMonth" type="button" aria-label="Next month">›</button>
+            </div>
+            <div class="calendar-grid calendar-weekdays" aria-hidden="true">
+              <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+            </div>
+            <div class="calendar-grid calendar-days" id="calendarDays"></div>
+          </section>
+
+          <section class="day-overview" aria-label="Selected day's menu">
+            <div class="selected-date">
+              <div>
+                <p class="eyebrow">Your menu</p>
+                <h2 id="selectedDateLabel"></h2>
+              </div>
+              <button class="text-button" type="button" id="todayButton">Go to today <span aria-hidden="true">→</span></button>
+            </div>
+            <div class="daily-note" id="dailyNote">
+              <span class="note-sparkle" aria-hidden="true">✳</span>
+              <span id="dailyNoteText">No menu set for this day.</span>
+            </div>
+          </section>
+        </div>
+
+        <div class="period-grid">
+          <section class="period-card breakfast-card" aria-labelledby="breakfastTitle">
+            <div class="period-heading">
+              <span class="period-icon breakfast-icon" aria-hidden="true">☕</span>
+              <div class="period-title-wrap">
+                <h2 id="breakfastTitle">Breakfast</h2>
+                <p>5:00 AM – 11:00 AM</p>
+              </div>
+              <button class="add-button" type="button" data-add-period="Breakfast"><span aria-hidden="true">＋</span> Add</button>
+            </div>
+            <div class="menu-items" id="breakfastItems"></div>
+            <p class="period-empty" id="breakfastEmpty">A fresh start begins with something good.</p>
+          </section>
+
+          <section class="period-card lunch-card" aria-labelledby="lunchTitle">
+            <div class="period-heading">
+              <span class="period-icon lunch-icon" aria-hidden="true">☼</span>
+              <div class="period-title-wrap">
+                <h2 id="lunchTitle">Lunch &amp; Dinner <span class="serving-badge" id="servingBadge" hidden>Now serving</span></h2>
+                <p>11:00 AM – 10:00 PM</p>
+              </div>
+              <button class="add-button" type="button" data-add-period="Lunch & Dinner"><span aria-hidden="true">＋</span> Add</button>
+            </div>
+            <div class="menu-items" id="lunchItems"></div>
+            <p class="period-empty" id="lunchEmpty">No menu added yet.</p>
+          </section>
+        </div>
+
+        <section class="add-menu-section" id="addMenuSection" aria-labelledby="itemDialogTitle">
+          <form id="itemForm" class="menu-form">
+            <div class="form-section-heading">
+              <div>
+                <p class="eyebrow">Plan the menu</p>
+                <h2 id="itemDialogTitle">Add menu item</h2>
+              </div>
+              <span class="form-date-context" id="formDateContext"></span>
+            </div>
+
+            <div class="form-row date-meal-row">
+              <div class="form-field">
+                <label for="rotationDate">Dates <span class="field-hint">(rotation)</span></label>
+                <div class="date-add-row">
+                  <input id="rotationDate" type="date">
+                  <button class="icon-button" id="addRotationDate" type="button" aria-label="Add rotation date">＋</button>
+                </div>
+                <div id="dateChips" class="date-chips"></div>
+              </div>
+              <fieldset class="form-field period-select">
+                <legend>Meal</legend>
+                <div class="segment-control">
+                  <button type="button" class="segment-button is-active" data-select-period="Breakfast">Breakfast</button>
+                  <button type="button" class="segment-button" data-select-period="Lunch & Dinner">Lunch &amp; Dinner</button>
+                </div>
+              </fieldset>
+            </div>
+            <input type="hidden" id="itemPeriod" value="Breakfast">
+
+            <label class="form-field" for="itemName">Dish name
+              <input id="itemName" type="text" maxlength="100" placeholder="e.g. Avocado toast" required>
+            </label>
+
+            <label class="form-field" for="itemCategory">Category
+              <select id="itemCategory">
+                <option>Main dish</option>
+                <option>Side</option>
+                <option>Soup</option>
+                <option>Salad</option>
+                <option>Sandwich</option>
+                <option>Dessert</option>
+                <option>Drink</option>
+                <option>Other</option>
+              </select>
+            </label>
+
+            <label class="form-field" for="itemDescription">Description
+              <textarea id="itemDescription" rows="2" maxlength="500" placeholder="Optional details"></textarea>
+            </label>
+
+            <div class="form-row">
+              <label class="form-field" for="coworkerCost">Co-worker cost
+                <input id="coworkerCost" type="text" maxlength="40" placeholder="e.g. 50p, £1.95, Free">
+              </label>
+              <label class="form-field" for="contractorCost">Contractor cost
+                <input id="contractorCost" type="text" maxlength="40" placeholder="e.g. £2, 90p">
+              </label>
+            </div>
+
+            <label class="switch-row" for="healthyOption">
+              <span>Healthy option</span>
+              <input id="healthyOption" type="checkbox">
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
+
+            <section class="ingredient-section" aria-labelledby="ingredientsHeading">
+              <div class="ingredient-heading">
+                <h3 id="ingredientsHeading">Items</h3>
+                <p>Add items with co-worker and contractor costs, e.g. Bacon 50p / £2.</p>
+              </div>
+              <div id="ingredientRows"></div>
+              <button class="ingredient-add" id="addIngredient" type="button"><span aria-hidden="true">＋</span> Add item</button>
+            </section>
+
+            <div class="photo-field">
+              <label class="form-field" for="itemPhoto">Photo <span class="field-hint">(optional image, up to 2 MB)</span>
+                <input id="itemPhoto" type="file" accept="image/*">
+              </label>
+              <div id="photoPreview" class="photo-preview" hidden></div>
+              <p class="photo-note">Photos are saved privately in this browser, not uploaded or shared.</p>
+            </div>
+
+            <label class="switch-row special-row" for="oneDaySpecial">
+              <span><strong>One-day special</strong><small>Disappears once the day passes.</small></span>
+              <input id="oneDaySpecial" type="checkbox">
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
+
+            <div class="form-actions">
+              <button class="button button-danger" id="deleteItemButton" type="button" hidden>Delete item</button>
+              <button class="button button-soft" id="cancelEditButton" type="button" hidden>Cancel edit</button>
+              <span class="action-spacer"></span>
+              <button class="button button-dark" type="submit" id="saveItemButton">Add to calendar</button>
+            </div>
+          </form>
+        </section>
+      </section>
+
+      <section id="menuView" class="menu-view" aria-labelledby="menuViewTitle" hidden>
+        <div class="menu-view-heading">
+          <button class="text-button" id="backToCalendar" type="button"><span aria-hidden="true">←</span> Back to calendar</button>
+          <p class="eyebrow">Today's table</p>
+          <h1 id="menuViewTitle">Today's menu</h1>
+          <p id="menuViewDate" class="page-intro"></p>
+          <button class="button button-outline" id="fullscreenMenu" type="button">View full screen</button>
+        </div>
+        <div class="public-menu-grid">
+          <section class="public-menu-card">
+            <span class="period-icon breakfast-icon" aria-hidden="true">☕</span>
+            <p class="eyebrow">5:00 AM – 11:00 AM</p>
+            <h2>Breakfast</h2>
+            <div class="public-menu-items" id="publicBreakfastItems"></div>
+            <p class="period-empty" id="publicBreakfastEmpty">Nothing on the menu just yet.</p>
+          </section>
+          <section class="public-menu-card">
+            <span class="period-icon lunch-icon" aria-hidden="true">☼</span>
+            <p class="eyebrow">11:00 AM – 10:00 PM</p>
+            <h2>Lunch &amp; Dinner</h2>
+            <div class="public-menu-items" id="publicLunchItems"></div>
+            <p class="period-empty" id="publicLunchEmpty">Nothing on the menu just yet.</p>
+          </section>
+        </div>
+        <p class="menu-view-footer">We hope you find something lovely.</p>
+      </section>
+    </main>
+    <footer class="app-footer">
+      <span>Good food makes a good day.</span>
+      <span>daily<span class="brand-accent">menu</span> <span class="footer-sparkle">✳</span></span>
+    </footer>
+  </div>
+
+  <dialog class="modal upload-modal" id="uploadDialog">
+    <form id="uploadForm" class="modal-content">
+      <div class="modal-heading">
+        <div>
+          <p class="eyebrow">A week at a time</p>
+          <h2>Bulk upload menus</h2>
+        </div>
+        <button class="icon-button modal-close" type="button" data-close-dialog aria-label="Close">×</button>
+      </div>
+      <p class="upload-description">Choose a CSV file to add several menu items at once. Your file should have columns for <code>date</code> (YYYY-MM-DD), <code>meal</code>, and <code>name</code>. Optional columns: <code>category</code>, <code>description</code>, <code>coworkerCost</code>, <code>contractorCost</code>, and <code>healthy</code>.</p>
+      <a class="text-button csv-template" href="menu-template.csv" download>Download a sample CSV <span aria-hidden="true">↓</span></a>
+      <label class="upload-drop">
+        <span class="upload-icon" aria-hidden="true">↥</span>
+        <strong id="uploadFileLabel">Choose a CSV file</strong>
+        <span>CSV files up to 2 MB</span>
+        <input id="bulkFile" type="file" accept=".csv,text/csv" required>
+      </label>
+      <div id="uploadPreview" class="upload-preview" hidden></div>
+      <div class="modal-actions">
+        <span class="action-spacer"></span>
+        <button class="button button-soft" type="button" data-close-dialog>Cancel</button>
+        <button class="button button-dark" id="importButton" type="submit" disabled>Import menu</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="modal editor-modal" id="editorDialog">
+    <form id="editorForm" class="modal-content">
+      <div class="modal-heading">
+        <div>
+          <p class="eyebrow">Menu management</p>
+          <h2>Editor sign in</h2>
+        </div>
+        <button class="icon-button modal-close" type="button" data-close-dialog aria-label="Close">×</button>
+      </div>
+      <p class="upload-description">Sign in with the editor PIN to add or update shared menu items.</p>
+      <label class="form-field" for="editorPin">Editor PIN
+        <input id="editorPin" type="password" autocomplete="current-password" required>
+      </label>
+      <div class="modal-actions">
+        <span class="action-spacer"></span>
+        <button class="button button-soft" type="button" data-close-dialog>Cancel</button>
+        <button class="button button-dark" type="submit" id="editorLoginSubmit">Sign in</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="calendar.js"></script>
+</body>
+</html>
